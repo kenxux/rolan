@@ -1,0 +1,32 @@
+name: Azure App Service CI/CD
+
+on:
+  push:
+    branches:
+      - master  # Trigger the workflow on push events to the master branch
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2  # Checkout the repository
+
+    - name: Set up .NET Core SDK
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '6.x'  # Specify the .NET Core SDK version
+
+    - name: Build and publish
+      run: |
+        dotnet restore
+        dotnet publish -c Release -o $(Build.ArtifactStagingDirectory)
+
+    - name: Deploy to Azure Web App
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: 'your-azure-app-name'  # Replace with your Azure App Service name
+        slot-name: 'production'  # (Optional) Replace with your deployment slot name if applicable
+        publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISH_PROFILE }}  # Add your Azure App Service publish profile as a secret in repository settings
+        package: $(Build.ArtifactStagingDirectory)  # Path to the published folder
+
